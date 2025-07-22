@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  udp2docker-server:
+    build: 
+      context: ./docker
+      dockerfile: Dockerfile
+    container_name: udp2docker-server
+    ports:
+      - "8888:8888/udp"    # UDP端口映射
+    volumes:
+      - ./logs:/app/logs   # 日志目录挂载
+    environment:
+      - UDP_HOST=0.0.0.0
+      - UDP_PORT=8888
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-uz", "localhost", "8888"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - udp2docker-network
+
+  # 可选：添加一个测试客户端容器
+  udp2docker-test-client:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+    container_name: udp2docker-test-client
+    profiles: ["test"]  # 只在test profile下启动
+    command: >
+      sh -c "
+        echo '测试UDP客户端启动...';
+        sleep 5;
+        echo 'Hello UDP Server!' | nc -u udp2docker-server 8888;
+        echo 'JSON测试消息' | nc -u udp2docker-server 8888;
+        sleep 10;
+        echo '测试完成'
+      "
+    depends_on:
+      - udp2docker-server
+    networks:
+      - udp2docker-network
+
+networks:
+  udp2docker-network:
+    driver: bridge
+
+volumes:
+  logs:
+    driver: local 
