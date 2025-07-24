@@ -9,6 +9,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <map>
+#include <memory>
 
 namespace udp2docker {
 
@@ -18,10 +20,15 @@ enum class LogLevel {
     DEBUG = 1,
     INFO = 2,
     WARN = 3,
-    ERROR = 4,
+    LOG_ERROR = 4,
     FATAL = 5,
     OFF = 6
 };
+
+// 辅助函数声明
+string_t level_to_string(LogLevel level);
+string_t extract_filename(const string_t& path);
+void replace_all(string_t& str, const string_t& from, const string_t& to);
 
 // 日志输出目标
 enum class LogTarget {
@@ -219,8 +226,6 @@ private:
     void file_output(const string_t& formatted_message);
     void async_worker();
     string_t get_current_timestamp() const;
-    string_t level_to_string(LogLevel level) const;
-    string_t extract_filename(const string_t& path) const;
     bool should_rotate() const;
     void perform_rotation();
     string_t get_rotated_filename(size_t index) const;

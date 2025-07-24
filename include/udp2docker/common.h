@@ -50,7 +50,7 @@ enum class MessageType {
     DATA = 2,
     CONTROL = 3,
     RESPONSE = 4,
-    ERROR = 5
+    MESSAGE_ERROR = 5
 };
 
 // 消息优先级

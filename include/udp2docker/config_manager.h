@@ -4,6 +4,7 @@
 #include <map>
 #include <optional>
 #include <functional>
+#include <mutex>
 
 namespace udp2docker {
 

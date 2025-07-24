@@ -302,7 +302,7 @@ Message MessageProtocol::create_response_message(uint32_t response_to_seq, const
 
 Message MessageProtocol::create_error_message(ErrorCode error_code, const string_t& error_message) {
     Message msg;
-    msg.header.type = MessageType::ERROR;
+    msg.header.type = MessageType::MESSAGE_ERROR;
     msg.header.priority = Priority::CRITICAL;
     msg.header.sequence_id = get_next_sequence_id();
     msg.header.timestamp = get_timestamp();
@@ -465,7 +465,7 @@ string_t message_type_to_string(MessageType type) {
         case MessageType::DATA: return "DATA";
         case MessageType::CONTROL: return "CONTROL";
         case MessageType::RESPONSE: return "RESPONSE";
-        case MessageType::ERROR: return "ERROR";
+        case MessageType::MESSAGE_ERROR: return "ERROR";
         default: return "UNKNOWN";
     }
 }

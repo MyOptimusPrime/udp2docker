@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <ctime>
 #include <algorithm>
+#include <map>
+#include <memory>
 
 // C++17 filesystem支持
 #if __cplusplus >= 201703L
@@ -59,6 +61,16 @@
 
 namespace udp2docker {
 
+// 全局辅助函数
+void replace_all(string_t& str, const string_t& from, const string_t& to) {
+    if (from.empty()) return;
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != string_t::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+}
+
 // LogRecord 实现
 LogRecord::LogRecord(LogLevel lvl, const string_t& msg, const string_t& logger,
                     const string_t& file, int line, const string_t& func)
@@ -79,13 +91,13 @@ string_t LogRecord::format(const string_t& pattern) const {
         std::stringstream ss;
         auto time_t = std::chrono::system_clock::to_time_t(timestamp);
         ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
-        ss << " [" << level_to_string(level) << "]";
+        ss << " [" << ::udp2docker::level_to_string(level) << "]";
         if (!logger_name.empty()) {
             ss << " [" << logger_name << "]";
         }
         ss << " " << message;
         if (!file_name.empty()) {
-            ss << " (" << extract_filename(file_name) << ":" << line_number << ")";
+            ss << " (" << ::udp2docker::extract_filename(file_name) << ":" << line_number << ")";
         }
         return ss.str();
     }
@@ -103,10 +115,10 @@ string_t LogRecord::format(const string_t& pattern) const {
     
     // 执行替换（使用全局函数）
     ::udp2docker::replace_all(result, "%d", time_ss.str());
-    ::udp2docker::replace_all(result, "%l", level_to_string(level));
+    ::udp2docker::replace_all(result, "%l", ::udp2docker::level_to_string(level));
     ::udp2docker::replace_all(result, "%n", logger_name);
     ::udp2docker::replace_all(result, "%m", message);
-    ::udp2docker::replace_all(result, "%f", extract_filename(file_name));
+    ::udp2docker::replace_all(result, "%f", ::udp2docker::extract_filename(file_name));
     ::udp2docker::replace_all(result, "%L", std::to_string(line_number));
     ::udp2docker::replace_all(result, "%F", function_name);
     ::udp2docker::replace_all(result, "%t", thread_ss.str());
@@ -114,31 +126,27 @@ string_t LogRecord::format(const string_t& pattern) const {
     return result;
 }
 
-string_t LogRecord::level_to_string(LogLevel level) const {
+// 全局辅助函数：将日志级别转换为字符串
+string_t level_to_string(LogLevel level) {
     switch (level) {
         case LogLevel::TRACE: return "TRACE";
         case LogLevel::DEBUG: return "DEBUG";
         case LogLevel::INFO: return "INFO";
         case LogLevel::WARN: return "WARN";
-        case LogLevel::ERROR: return "ERROR";
+        case LogLevel::LOG_ERROR: return "ERROR";
         case LogLevel::FATAL: return "FATAL";
         case LogLevel::OFF: return "OFF";
         default: return "UNKNOWN";
     }
 }
 
-string_t LogRecord::extract_filename(const string_t& path) const {
+// 全局辅助函数：从路径中提取文件名
+string_t extract_filename(const string_t& path) {
     size_t pos = path.find_last_of("/\\");
     return pos != string_t::npos ? path.substr(pos + 1) : path;
 }
 
-void replace_all(string_t& str, const string_t& from, const string_t& to) {
-    size_t start_pos = 0;
-    while ((start_pos = str.find(from, start_pos)) != string_t::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length();
-    }
-}
+
 
 // Logger 实现
 Logger::Logger(const string_t& name)
@@ -269,7 +277,7 @@ void Logger::warn(const string_t& message, const string_t& file, int line, const
 }
 
 void Logger::error(const string_t& message, const string_t& file, int line, const string_t& function) {
-    log(LogLevel::ERROR, message, file, line, function);
+    log(LogLevel::LOG_ERROR, message, file, line, function);
 }
 
 void Logger::fatal(const string_t& message, const string_t& file, int line, const string_t& function) {
@@ -329,7 +337,7 @@ void Logger::console_output(const string_t& formatted_message, LogLevel level) {
     WORD color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // 默认白色
     
     switch (level) {
-        case LogLevel::ERROR:
+        case LogLevel::LOG_ERROR:
         case LogLevel::FATAL:
             color = FOREGROUND_RED | FOREGROUND_INTENSITY;
             break;
@@ -354,7 +362,7 @@ void Logger::console_output(const string_t& formatted_message, LogLevel level) {
     const char* color_code = "";
     
     switch (level) {
-        case LogLevel::ERROR:
+        case LogLevel::LOG_ERROR:
         case LogLevel::FATAL:
             color_code = "\033[31m"; // 红色
             break;
@@ -423,23 +431,7 @@ string_t Logger::get_current_timestamp() const {
     return ss.str();
 }
 
-string_t Logger::level_to_string(LogLevel level) const {
-    switch (level) {
-        case LogLevel::TRACE: return "TRACE";
-        case LogLevel::DEBUG: return "DEBUG";
-        case LogLevel::INFO: return "INFO";
-        case LogLevel::WARN: return "WARN";
-        case LogLevel::ERROR: return "ERROR";
-        case LogLevel::FATAL: return "FATAL";
-        case LogLevel::OFF: return "OFF";
-        default: return "UNKNOWN";
-    }
-}
 
-string_t Logger::extract_filename(const string_t& path) const {
-    size_t pos = path.find_last_of("/\\");
-    return pos != string_t::npos ? path.substr(pos + 1) : path;
-}
 
 bool Logger::should_rotate() const {
     if (file_path_.empty() || !file_stream_.is_open()) {

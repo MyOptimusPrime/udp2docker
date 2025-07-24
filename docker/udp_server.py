@@ -69,7 +69,7 @@ class MessageProtocol:
             2: "DATA", 
             3: "CONTROL",
             4: "RESPONSE",
-            5: "ERROR"
+            5: "MESSAGE_ERROR"
         }
         return types.get(msg_type, "UNKNOWN")
     
@@ -217,7 +217,7 @@ class UDPServer:
         elif msg_type == 4:  # RESPONSE
             logger.info("收到响应消息")
             
-        elif msg_type == 5:  # ERROR
+        elif msg_type == 5:  # MESSAGE_ERROR
             try:
                 error_msg = payload.decode('utf-8')
                 logger.warning(f"错误消息: {error_msg}")

@@ -8,7 +8,7 @@
 
 using namespace udp2docker;
 
-// 简单的测试框架
+// Simple test framework
 class TestFramework {
 private:
     int total_tests = 0;
@@ -22,209 +22,209 @@ public:
     }
     
     void print_summary() {
-        std::cout << "\n测试摘要: " << passed_tests << "/" << total_tests << " 通过" << std::endl;
+        std::cout << "\nTest Summary: " << passed_tests << "/" << total_tests << " passed" << std::endl;
         if (passed_tests == total_tests) {
-            std::cout << "所有测试通过! ✓" << std::endl;
+            std::cout << "All tests passed! ✓" << std::endl;
         } else {
-            std::cout << "有测试失败! ✗" << std::endl;
+            std::cout << "Some tests failed! ✗" << std::endl;
         }
     }
 };
 
-// 测试配置管理器
+// Test configuration manager
 void test_config_manager(TestFramework& tf) {
-    std::cout << "\n=== 测试配置管理器 ===" << std::endl;
+    std::cout << "\n=== Testing Configuration Manager ===" << std::endl;
     
     ConfigManager config;
     
-    // 测试字符串配置
-    config.set_string("test.string", "hello world", "测试字符串");
-    tf.run_test("设置/获取字符串配置", 
+    // Test string configuration
+    config.set_string("test.string", "hello world", "Test string");
+    tf.run_test("Set/Get string config", 
                 config.get_string("test.string") == "hello world");
     
-    // 测试整数配置
-    config.set_int("test.int", 42, "测试整数");
-    tf.run_test("设置/获取整数配置", 
+    // Test integer configuration
+    config.set_int("test.int", 42, "Test integer");
+    tf.run_test("Set/Get integer config", 
                 config.get_int("test.int") == 42);
     
-    // 测试布尔配置
-    config.set_bool("test.bool", true, "测试布尔值");
-    tf.run_test("设置/获取布尔配置", 
+    // Test boolean configuration
+    config.set_bool("test.bool", true, "Test boolean");
+    tf.run_test("Set/Get boolean config", 
                 config.get_bool("test.bool") == true);
     
-    // 测试浮点数配置
-    config.set_double("test.double", 3.14159, "测试浮点数");
-    tf.run_test("设置/获取浮点数配置", 
+    // Test double configuration
+    config.set_double("test.double", 3.14159, "Test double");
+    tf.run_test("Set/Get double config", 
                 abs(config.get_double("test.double") - 3.14159) < 0.00001);
     
-    // 测试配置存在性检查
-    tf.run_test("检查配置存在性", 
+    // Test configuration existence check
+    tf.run_test("Check config existence", 
                 config.has("test.string") && !config.has("nonexistent"));
     
-    // 测试默认值
-    tf.run_test("默认值功能", 
+    // Test default values
+    tf.run_test("Default value functionality", 
                 config.get_string("nonexistent", "default") == "default");
 }
 
-// 测试消息协议
+// Test message protocol
 void test_message_protocol(TestFramework& tf) {
-    std::cout << "\n=== 测试消息协议 ===" << std::endl;
+    std::cout << "\n=== Testing Message Protocol ===" << std::endl;
     
     MessageProtocol protocol;
     
-    // 测试心跳消息创建
+    // Test heartbeat message creation
     auto heartbeat = protocol.create_heartbeat();
-    tf.run_test("创建心跳消息", 
+    tf.run_test("Create heartbeat message", 
                 heartbeat.header.type == MessageType::HEARTBEAT);
     
-    // 测试数据消息创建
-    std::string test_data = "测试数据内容";
+    // Test data message creation
+    std::string test_data = "Test data content";
     auto data_msg = protocol.create_string_message(test_data, Priority::HIGH);
-    tf.run_test("创建数据消息", 
+    tf.run_test("Create data message", 
                 data_msg.header.type == MessageType::DATA &&
                 data_msg.header.priority == Priority::HIGH);
     
-    // 测试控制消息创建
+    // Test control message creation
     auto control_msg = protocol.create_control_message("TEST_COMMAND", Priority::CRITICAL);
-    tf.run_test("创建控制消息", 
+    tf.run_test("Create control message", 
                 control_msg.header.type == MessageType::CONTROL &&
                 control_msg.header.priority == Priority::CRITICAL);
     
-    // 测试消息序列化和反序列化
+    // Test message serialization and deserialization
     auto serialized = protocol.serialize(data_msg);
-    tf.run_test("消息序列化", serialized.has_value());
+    tf.run_test("Message serialization", serialized.has_value());
     
     if (serialized) {
         auto deserialized = protocol.deserialize(*serialized);
-        tf.run_test("消息反序列化", deserialized.has_value());
+        tf.run_test("Message deserialization", deserialized.has_value());
         
         if (deserialized) {
-            tf.run_test("序列化/反序列化一致性", 
+            tf.run_test("Serialization/deserialization consistency", 
                         deserialized->header.type == data_msg.header.type &&
                         deserialized->header.priority == data_msg.header.priority);
         }
     }
     
-    // 测试消息验证
+    // Test message validation
     if (serialized) {
-        tf.run_test("消息验证", protocol.validate_message(*serialized));
+        tf.run_test("Message validation", protocol.validate_message(*serialized));
     }
 }
 
-// 测试日志系统
+// Test logging system
 void test_logger(TestFramework& tf) {
-    std::cout << "\n=== 测试日志系统 ===" << std::endl;
+    std::cout << "\n=== Testing Logging System ===" << std::endl;
     
     Logger logger("TestLogger");
     
-    // 测试日志级别设置
+    // Test log level setting
     logger.set_level(LogLevel::DEBUG);
-    tf.run_test("设置日志级别", logger.get_level() == LogLevel::DEBUG);
+    tf.run_test("Set log level", logger.get_level() == LogLevel::DEBUG);
     
-    // 测试日志级别检查
-    tf.run_test("日志级别检查 - DEBUG", logger.is_enabled(LogLevel::DEBUG));
-    tf.run_test("日志级别检查 - TRACE", !logger.is_enabled(LogLevel::TRACE));
-    tf.run_test("日志级别检查 - ERROR", logger.is_enabled(LogLevel::ERROR));
+    // Test log level checking
+    tf.run_test("Log level check - DEBUG", logger.is_enabled(LogLevel::DEBUG));
+    tf.run_test("Log level check - TRACE", !logger.is_enabled(LogLevel::TRACE));
+    tf.run_test("Log level check - ERROR", logger.is_enabled(LogLevel::LOG_ERROR));
     
-    // 测试日志记录（这些不会失败，只是验证能正常调用）
-    logger.debug("这是一条调试日志");
-    logger.info("这是一条信息日志");
-    logger.warn("这是一条警告日志");
-    logger.error("这是一条错误日志");
+    // Test log recording (these won't fail, just verify they can be called normally)
+    logger.debug("This is a debug log");
+    logger.info("This is an info log");
+    logger.warn("This is a warning log");
+    logger.error("This is an error log");
     
-    tf.run_test("日志记录功能", true); // 假设能执行到这里就成功了
+    tf.run_test("Log recording functionality", true); // Assume success if we get here
     
-    // 测试日志器名称
-    tf.run_test("日志器名称", logger.get_name() == "TestLogger");
+    // Test logger name
+    tf.run_test("Logger name", logger.get_name() == "TestLogger");
 }
 
-// 测试UDP客户端（基本功能，不涉及实际网络）
+// Test UDP client (basic functionality, no actual networking)
 void test_udp_client(TestFramework& tf) {
-    std::cout << "\n=== 测试UDP客户端 ===" << std::endl;
+    std::cout << "\n=== Testing UDP Client ===" << std::endl;
     
     UdpConfig config;
     config.server_host = "127.0.0.1";
     config.server_port = 8888;
-    config.timeout_ms = 1000; // 短超时避免测试时间过长
+    config.timeout_ms = 1000; // Short timeout to avoid long test time
     
     UdpClient client(config);
     
-    // 测试配置获取
-    tf.run_test("获取配置", 
+    // Test configuration retrieval
+    tf.run_test("Get configuration", 
                 client.get_config().server_host == "127.0.0.1" &&
                 client.get_config().server_port == 8888);
     
-    // 测试初始化
+    // Test initialization
     auto init_result = client.initialize();
-    tf.run_test("UDP客户端初始化", 
+    tf.run_test("UDP client initialization", 
                 init_result == ErrorCode::SUCCESS);
     
     if (init_result == ErrorCode::SUCCESS) {
-        // 测试连接状态
-        tf.run_test("连接状态检查", client.is_connected());
+        // Test connection status
+        tf.run_test("Connection status check", client.is_connected());
         
-        // 测试统计信息（初始状态）
+        // Test statistics (initial state)
         auto stats = client.get_statistics();
-        tf.run_test("初始统计信息", 
+        tf.run_test("Initial statistics", 
                     stats.packets_sent == 0 && 
                     stats.packets_received == 0);
         
-        // 测试发送（可能会失败，但不应该崩溃）
-        std::string test_message = "测试消息";
+        // Test sending (may fail, but shouldn't crash)
+        std::string test_message = "Test message";
         auto send_result = client.send_string(test_message);
-        tf.run_test("发送消息调用", 
+        tf.run_test("Send message call", 
                     send_result == ErrorCode::SUCCESS || 
                     send_result != ErrorCode::INVALID_PARAMETER);
         
         client.close();
-        tf.run_test("关闭连接后状态", !client.is_connected());
+        tf.run_test("Status after closing connection", !client.is_connected());
     }
 }
 
-// 测试辅助函数
+// Test utility functions
 void test_utility_functions(TestFramework& tf) {
-    std::cout << "\n=== 测试辅助函数 ===" << std::endl;
+    std::cout << "\n=== Testing Utility Functions ===" << std::endl;
     
-    // 测试消息类型转字符串
-    tf.run_test("消息类型转字符串", 
+    // Test message type to string conversion
+    tf.run_test("Message type to string", 
                 message_type_to_string(MessageType::DATA) == "DATA" &&
                 message_type_to_string(MessageType::HEARTBEAT) == "HEARTBEAT");
     
-    // 测试优先级转字符串
-    tf.run_test("优先级转字符串",
+    // Test priority to string conversion
+    tf.run_test("Priority to string",
                 priority_to_string(Priority::HIGH) == "HIGH" &&
                 priority_to_string(Priority::LOW) == "LOW");
     
-    // 测试错误码转字符串
-    tf.run_test("错误码转字符串",
+    // Test error code to string conversion
+    tf.run_test("Error code to string",
                 error_code_to_string(ErrorCode::SUCCESS) == "SUCCESS" &&
                 error_code_to_string(ErrorCode::TIMEOUT) == "TIMEOUT");
 }
 
 int main() {
-    std::cout << "=== UDP2Docker 单元测试 ===" << std::endl;
-    std::cout << "运行各个模块的基本功能测试" << std::endl;
+    std::cout << "=== UDP2Docker Unit Tests ===" << std::endl;
+    std::cout << "Running basic functionality tests for all modules" << std::endl;
     
     TestFramework tf;
     
     try {
-        // 运行所有测试
+        // Run all tests
         test_config_manager(tf);
         test_message_protocol(tf);
         test_logger(tf);
         test_udp_client(tf);
         test_utility_functions(tf);
         
-        // 打印测试摘要
+        // Print test summary
         tf.print_summary();
         
     } catch (const std::exception& e) {
-        std::cerr << "测试过程中发生异常: " << e.what() << std::endl;
+        std::cerr << "Exception occurred during testing: " << e.what() << std::endl;
         return 1;
     }
     
-    std::cout << "\n注意: UDP网络测试需要实际的网络环境配置" << std::endl;
-    std::cout << "这些测试主要验证基本功能和接口正确性" << std::endl;
+    std::cout << "\nNote: UDP network tests require actual network environment configuration" << std::endl;
+    std::cout << "These tests mainly verify basic functionality and interface correctness" << std::endl;
     
     return 0;
 } 
